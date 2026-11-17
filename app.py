@@ -1,5 +1,8 @@
 # IMPORTS!!
 
+# Streamlit
+import streamlit as st
+
 # Imports functions from planner.py
 from planner import is_duplicate, calculate_urgency_and_days, find_conflicts, escape_ics_text
 
@@ -16,13 +19,9 @@ from google import genai
 from google.genai import types
 # For error handling
 import google.genai.errors as errors
-# API Key
-client = genai.Client(
-    api_key=""
-)
 
-# Streamlit
-import streamlit as st
+# API Key
+client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
 # Pandas module for data structuring
 import pandas as pd

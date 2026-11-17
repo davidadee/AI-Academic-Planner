@@ -1,0 +1,5 @@
+# NOTE: Deployed streamlit apps automatically checks requirements.txt
+
+streamlit
+pandas
+google-genai
