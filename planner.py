@@ -15,6 +15,10 @@ def is_duplicate(new_task, existing_tasks):
 def calculate_urgency_and_days(task_list):
     today = date.today()
     for task in task_list:
+        if task["due_date"] == None:
+            task["days_left"] = None
+            task["is_urgent"] = False
+            continue
         due_date = datetime.strptime(task["due_date"], "%Y-%m-%d").date()
         difference = due_date - today
         task["days_left"] = difference.days

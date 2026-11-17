@@ -31,29 +31,35 @@ import uuid
 from datetime import datetime, timezone
 
 
+# TODO: 
+    # Make the app recalculate countdowns each time the session reruns DONE
+    # Make better instructions DONE
+    # If a date can't be properly extracted, prevent app from crashing. DONE 
+    # Add persistent private storage
+
+
 def analyze_syllabus_with_AI(pdf_bytes):
     prompt = f"""
-Reference Start Date: {semester_start_date}
+Reference semester start date: {semester_start_date}
 
-Instructions:
-1. Extract all evaluative items: Common Exams, Final Exam, and weekly "Recommended Problems" / Chapter Homework.
-2. For Common Exams, use the exact calendar date specified.
-3. For weekly topics/problems (e.g., Week 1, Week 2):
-   - Calculate the due date as the Friday of that week relative to the reference start date (Week 1 = first Friday after start date).
-   - Use the Chapter title or problems as the assignment title.
-   - For the title, use strictly: 'Chapter X Homework' or 'Exam X'. Do NOT include problem numbers or section descriptions in the title.
-4. For the Final Exam, estimate the date using the Final Exam start date in the syllabus calendar (Dec 16, 2026).
+Extract all Common Exams, the Final Exam, and weekly Recommended Problems or Chapter Homework from the syllabus.
 
-Extract all assignments from the provided PDF into a JSON list of objects.
+For each assignment:
+- Use the course name or code shown in the syllabus.
+- Use concise titles: “Exam X” for numbered exams, “Final Exam” for the final, and “Chapter X Homework” for chapter homework.
+- For exams and the final exam, use the exact due date stated in the syllabus. Do not estimate.
+- For weekly homework, use an explicit due date if the syllabus provides one. Otherwise, if the assignment has a week number, use the first Friday on or after the semester start date as Week 1's due date. Each subsequent week is seven days later.
+- If you cannot confidently extract or calculate the due date using these rules, use JSON null. Do not guess or omit the assignment just because its date is unknown.
 
-Return a JSON array where each object has:
-- course
-- title
-- due_date (YYYY-MM-DD)
+Return only a valid JSON array. Each item must have:
+- course: a string
+- title: a string
+- due_date: a date in YYYY-MM-DD format, or JSON null
 """
 
-    # Selects model, establishes inputs and input types, and configures the AI output.
+# If API call fails the first time, try 2 more times before showing error message
     try:
+        # Selects model, establishes inputs and input types, and configures the AI output. 
         response = client.models.generate_content(
         model="gemini-3.5-flash-lite",
         contents=[
@@ -63,7 +69,7 @@ Return a JSON array where each object has:
             "temperature": 0.0
         }
 )
-        # Accounts for API Error
+    # Accounts for API Error
     except errors.APIError:
         st.error("Error: Failed Gemini Response.")
         return []
@@ -76,6 +82,7 @@ Return a JSON array where each object has:
         st.error("Error: Invalid Gemini Response.")
         return []
 
+    # If new_tasks is a list of tasks, then initialize the days_left and is_urgent keys in each task
     if isinstance(new_tasks, list):
         for task in new_tasks:
             task["days_left"] = None
@@ -88,11 +95,13 @@ Return a JSON array where each object has:
 
 
 
-
 st.title("AI Academic Planner")
 
 if "assignments" not in st.session_state:
     st.session_state["assignments"] = []
+
+calculate_urgency_and_days(st.session_state["assignments"])
+
 
 # Constantly checks for potential conflicts in assignments list. If delete button selected,
 # the task is removed from the original assignments list
@@ -142,7 +151,7 @@ if uploaded_syllabus is not None:
                 dup_count += 1
         if dup_count > 0:
             st.success(f"Analysis complete. {add_count} new assignments added; {dup_count} duplicates skipped")
-        else:
+        elif (dup_count == 0) and (len(st.session_state["assignments"]) > 0):
             st.success(f"Analysis complete. {add_count} new assignments added; no duplicates found")
 
 
@@ -204,8 +213,9 @@ col2.metric(label = "Urgent (≤7 Days)", value = urgency_count)
     # Only search if there are upcoming tasks.
 upcoming_tasks = []
 for task in st.session_state["assignments"]:
-    if (task["days_left"] is not None) and (task["days_left"] >=0):
-        upcoming_tasks.append(task)
+    if (task["days_left"] is not None):
+        if (task["days_left"] >=0):
+            upcoming_tasks.append(task)
 
 if upcoming_tasks:
     closest_upcoming_task = upcoming_tasks[0]
@@ -222,13 +232,22 @@ if upcoming_tasks:
 else:
     col3.metric(label = "Next Due Date", value = "None")
 
+# OBJECTIVE:
+    # Create a temp list of tasks that have null date. Those tasks won't be a part of the ics file.
+    # Notify the user of the Course and Title of each task that could not be added to the ics file.
+
 
 # Creates a .ics file 
 calendar_text = """BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//AI Academic Planner//EN
 """
+
+no_date_tasks = []
 for task in st.session_state["assignments"]:
+    if task["due_date"] == None:
+        no_date_tasks.append({"course": task["course"], "title": task["title"]})
+        continue
     # Convert the date into a date object, then re-format it into an ics-friendly string
     event_date = datetime.strptime(task["due_date"], "%Y-%m-%d").strftime("%Y%m%d")
     # Unique event UID for ics
@@ -243,13 +262,17 @@ for task in st.session_state["assignments"]:
     calendar_text += event_text + "\n"
 calendar_text += "END:VCALENDAR\n"
 if st.session_state["assignments"]:
-    st.sidebar.download_button(
+    download_clicked = st.sidebar.download_button(
         label = "Download calendar (.ics)",
         icon = "📆", 
         data = calendar_text, 
         file_name = "assignments.ics", 
         mime = "text/calendar")
-
+    if download_clicked:
+        if len(no_date_tasks) > 0:
+            st.warning(f"The following tasks were not added to the ics file, because they have no date:")
+            for task in no_date_tasks:
+                st.warning(f"{task['course']}: task['title']")
 
 
 
@@ -279,7 +302,7 @@ if st.session_state["assignments"]:
     display_df.columns = ["Course", "Assignment", "Due Date", "Days Remaining"]
 
 
-#Converts date string to a date object, 
+# Converts date string to a date object, 
 # then convert the date object to a date sentence (Ex: October 30, 2026)
     display_df["Due Date"] = pd.to_datetime(display_df["Due Date"])
     # Sort Due Dates column chronologically
