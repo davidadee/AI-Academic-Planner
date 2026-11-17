@@ -32,10 +32,8 @@ from datetime import datetime, timezone
 
 
 # TODO: 
-    # Make the app recalculate countdowns each time the session reruns DONE
-    # Make better instructions DONE
-    # If a date can't be properly extracted, prevent app from crashing. DONE 
     # Add persistent private storage
+    # Allow undated tasks to still show when user hides past-due tasks
 
 
 def analyze_syllabus_with_AI(pdf_bytes):
