@@ -35,6 +35,7 @@ from datetime import datetime, timezone
     # Add persistent private storage
     # Allow undated tasks to still show when user hides past-due tasks
     # Show loading screen when API is parsing syllabus
+    # distinguish “the request failed” from “the request succeeded and found zero assignments,” and only show the analysis success message for the latter.
 
 
 def analyze_syllabus_with_AI(pdf_bytes):
