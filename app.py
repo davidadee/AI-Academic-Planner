@@ -34,6 +34,7 @@ from datetime import datetime, timezone
 # TODO: 
     # Add persistent private storage
     # Allow undated tasks to still show when user hides past-due tasks
+    # Show loading screen when API is parsing syllabus
 
 
 def analyze_syllabus_with_AI(pdf_bytes):
@@ -55,7 +56,6 @@ Return only a valid JSON array. Each item must have:
 - due_date: a date in YYYY-MM-DD format, or JSON null
 """
 
-# If API call fails the first time, try 2 more times before showing error message
     try:
         # Selects model, establishes inputs and input types, and configures the AI output. 
         response = client.models.generate_content(
@@ -123,6 +123,7 @@ st.sidebar.title("Course Setup")
 
 # Collect Semester Start Date. Initialized at Sep 2nd.
 semester_start_date = st.sidebar.date_input("Semester Start Date", value = date(2026, 9, 2))
+st.sidebar.caption("Make sure this date is accurate; it affects calculated homework due dates.")
 
 # Store uploaded syllabus
 uploaded_syllabus = st.sidebar.file_uploader("Upload Syllabus PDF", type=["pdf"])
