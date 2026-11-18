@@ -289,12 +289,6 @@ if st.session_state["assignments"]:
 # Assigned to a variable so I can change column names
     display_df = df[["course", "title", "due_date", "days_left"]]
 
-# Hides Past Due Assignments if user checks the box
-    hide_past_due = st.sidebar.checkbox("Hide Past Due Assignments", value = False)
-    if hide_past_due:
-        # Only shows the tasks where the days_left is greater than 0
-        display_df = display_df[display_df["days_left"] >= 0]
-
 
 # Renames the columns in df (course, title, due_date, days_left). 
 # To change columns name, the len(list) of new names must match # of columns. 
@@ -317,6 +311,14 @@ if st.session_state["assignments"]:
             }
 
     st.subheader("Your Assignments")
+
+# Hides Past Due Assignments if user checks the box
+    hide_past_due = st.checkbox("Hide Past Due Assignments", value = False)
+    if hide_past_due:
+        # Only shows the tasks where the days_left is greater than 0
+        display_df = display_df[display_df["Days Remaining"] >= 0]
+
+# Display dataframe
     st.dataframe(display_df, hide_index=True, row_height=45, column_config = config)
 
 else:
