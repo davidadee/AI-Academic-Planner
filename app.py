@@ -232,7 +232,7 @@ if upcoming_tasks:
 else:
     col3.metric(label = "Next Due Date", value = "None")
 
-# OBJECTIVE:
+# TODO:
     # Create a temp list of tasks that have null date. Those tasks won't be a part of the ics file.
     # Notify the user of the Course and Title of each task that could not be added to the ics file.
 
@@ -321,6 +321,15 @@ if st.session_state["assignments"]:
 
 else:
     st.info("Hello! Please upload your first syllabus.")
+
+
+
+
+
+
+
+
+
 
 
 
