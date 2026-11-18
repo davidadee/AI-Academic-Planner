@@ -1,7 +1,6 @@
-
 # AI Academic Planner
 
-[**Try the live demo**](https://your-app-name.streamlit.app) [ai-academic-planner.streamlit.app](https://ai-academic-planner.streamlit.app/)
+[**Try the live demo**](https://ai-academic-planner.streamlit.app/)
 
 An early-stage Streamlit portfolio prototype that helps students organize assignments from course syllabi. It uses Google's Gemini API to extract assignments from uploaded PDFs, and also supports manual entry and calendar export.
 
