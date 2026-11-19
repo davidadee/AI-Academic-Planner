@@ -243,11 +243,13 @@ VERSION:2.0
 PRODID:-//AI Academic Planner//EN
 """
 
+# Checks for all tasks that don't have a date. Add them to list of tasks without date
 no_date_tasks = []
 for task in st.session_state["assignments"]:
     if task["due_date"] == None:
         no_date_tasks.append({"course": task["course"], "title": task["title"]})
         continue
+
     # Convert the date into a date object, then re-format it into an ics-friendly string
     event_date = datetime.strptime(task["due_date"], "%Y-%m-%d").strftime("%Y%m%d")
     # Unique event UID for ics
@@ -272,9 +274,7 @@ if st.session_state["assignments"]:
         if len(no_date_tasks) > 0:
             st.warning(f"The following tasks were not added to the ics file, because they have no date:")
             for task in no_date_tasks:
-                st.warning(f"{task['course']}: task['title']")
-
-
+                st.warning(f"{task['course']}: {task['title']}")
 
 
 
